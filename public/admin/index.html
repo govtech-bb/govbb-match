@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Manage opportunities — alpha.gov.bb</title>
+<link rel="stylesheet" href="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/styles.css" />
+<link rel="stylesheet" href="/shared/styles.css" />
+</head>
+<body class="govbb-page">
+  <div>
+    <div class="govbb-official-banner">
+      <div class="govbb-container govbb-official-banner__inner">
+        <div class="govbb-official-banner__crest">
+          <img class="govbb-official-banner__icon" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-creast.svg" alt="" />
+        </div>
+        <div class="govbb-official-banner__text"><span>Official government website</span></div>
+      </div>
+    </div>
+
+    <div class="govbb-status-banner govbb-status-banner--alpha" role="status" aria-live="polite">
+      <div class="govbb-container"><p>This page is in <a class="govbb-link govbb-link--secondary" href="#">Alpha</a>.</p></div>
+    </div>
+
+    <header class="govbb-header">
+      <div class="govbb-container govbb-header__inner">
+        <a href="/" aria-label="Go to the homepage">
+          <img class="govbb-header__logo" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-logo.svg" alt="GOVBB" />
+        </a>
+      </div>
+    </header>
+  </div>
+
+  <main class="govbb-page__main">
+    <div class="govbb-container app-page">
+      <nav class="govbb-breadcrumbs" aria-label="Breadcrumb">
+        <ol class="govbb-breadcrumbs__list">
+          <li class="govbb-breadcrumbs__item"><a class="govbb-breadcrumbs__link" href="/">Home</a></li>
+          <li class="govbb-breadcrumbs__item" aria-current="page">Admin</li>
+        </ol>
+      </nav>
+
+      <div class="app-page__heading">
+        <span class="app-page__service-title govbb-text-body">Admin</span>
+        <h1 class="govbb-text-display">Manage opportunities</h1>
+        <p class="govbb-text-body">Add new programmes or remove ones that have ended. Stored in <code>data/opportunities.json</code>.</p>
+      </div>
+
+      <form id="add-form" class="form-groups" autocomplete="off">
+        <h2 class="govbb-text-h2">Add an opportunity</h2>
+
+        <div class="form-row" style="--cols:2">
+          <div class="govbb-form-group">
+            <label class="govbb-label" for="f-title">Title</label>
+            <div class="govbb-input-wrapper">
+              <input class="govbb-input" id="f-title" name="title" type="text" required />
+            </div>
+          </div>
+          <div class="govbb-form-group">
+            <label class="govbb-label" for="f-category">Category</label>
+            <div class="govbb-select-wrapper">
+              <select class="govbb-select" id="f-category" name="category">
+                <option value="program">Programme</option>
+                <option value="scholarship">Scholarship</option>
+                <option value="grant">Grant</option>
+                <option value="workshop">Workshop</option>
+                <option value="initiative">Initiative</option>
+                <option value="volunteer">Volunteer</option>
+                <option value="job">Job</option>
+                <option value="other">Other</option>
+              </select>
+              <span class="govbb-select__chevron" aria-hidden="true">
+                <svg viewBox="0 0 12 8" xmlns="http://www.w3.org/2000/svg"><path d="M0 8 6 0 12 8z" /></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="govbb-form-group">
+          <label class="govbb-label" for="f-description">Description</label>
+          <p class="govbb-hint" id="f-description-hint">A short summary shown to applicants.</p>
+          <div class="govbb-input-wrapper">
+            <textarea class="govbb-textarea" id="f-description" name="description" rows="4" aria-describedby="f-description-hint"></textarea>
+          </div>
+        </div>
+
+        <div class="form-row" style="--cols:3">
+          <div class="govbb-form-group">
+            <label class="govbb-label" for="f-tags">Tags</label>
+            <p class="govbb-hint" id="f-tags-hint">Comma separated</p>
+            <div class="govbb-input-wrapper">
+              <input class="govbb-input" id="f-tags" name="tags" type="text" placeholder="youth, stem" aria-describedby="f-tags-hint" />
+            </div>
+          </div>
+          <div class="govbb-form-group">
+            <label class="govbb-label" for="f-deadline">Deadline</label>
+            <div class="govbb-input-wrapper">
+              <input class="govbb-input" id="f-deadline" name="deadline" type="date" />
+            </div>
+          </div>
+          <div class="govbb-form-group">
+            <label class="govbb-label" for="f-url">More info URL</label>
+            <div class="govbb-input-wrapper">
+              <input class="govbb-input" id="f-url" name="url" type="url" placeholder="https://" />
+            </div>
+          </div>
+        </div>
+
+        <fieldset class="govbb-fieldset">
+          <legend class="govbb-fieldset__legend">Eligibility</legend>
+          <p class="govbb-hint">Leave blank if not applicable.</p>
+          <div class="form-row" style="--cols:3">
+            <div class="govbb-form-group">
+              <label class="govbb-label" for="f-ageMin">Minimum age</label>
+              <div class="govbb-input-wrapper">
+                <input class="govbb-input" id="f-ageMin" name="ageMin" type="number" min="0" inputmode="numeric" />
+              </div>
+            </div>
+            <div class="govbb-form-group">
+              <label class="govbb-label" for="f-ageMax">Maximum age</label>
+              <div class="govbb-input-wrapper">
+                <input class="govbb-input" id="f-ageMax" name="ageMax" type="number" min="0" inputmode="numeric" />
+              </div>
+            </div>
+            <div class="govbb-form-group">
+              <label class="govbb-label" for="f-citizenship">Citizenship</label>
+              <p class="govbb-hint" id="f-citizenship-hint">Use BB for Barbadian.</p>
+              <div class="govbb-input-wrapper">
+                <input class="govbb-input" id="f-citizenship" name="citizenship" type="text" placeholder="BB" aria-describedby="f-citizenship-hint" />
+              </div>
+            </div>
+          </div>
+          <div class="govbb-form-group">
+            <label class="govbb-label" for="f-interests">Eligibility interests</label>
+            <p class="govbb-hint" id="f-interests-hint">Comma separated. These match against the user's selected interests.</p>
+            <div class="govbb-input-wrapper">
+              <input class="govbb-input" id="f-interests" name="interests" type="text" placeholder="science, tech" aria-describedby="f-interests-hint" />
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="govbb-btn-group">
+          <button class="govbb-btn" type="submit">Save opportunity</button>
+          <button class="govbb-btn--secondary" type="reset">Reset</button>
+        </div>
+      </form>
+
+      <section>
+        <h2 class="govbb-text-h2">All opportunities</h2>
+        <ul id="list" class="govbb-list opps-list" aria-live="polite"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="govbb-footer">
+    <div class="govbb-container govbb-footer__inner">
+      <nav class="govbb-footer__nav" aria-label="Footer">
+        <a class="govbb-footer__link" href="/">Home</a>
+        <a class="govbb-footer__link" href="/matcher/">Matcher</a>
+      </nav>
+      <hr class="govbb-footer__divider" aria-hidden="true" />
+      <div class="govbb-footer__end">
+        <img class="govbb-footer__coat" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-creast.svg" alt="Government of Barbados Coat of Arms" />
+        <p class="govbb-footer__copy">© 2026 Government of Barbados</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/admin/app.js"></script>
+</body>
+</html>

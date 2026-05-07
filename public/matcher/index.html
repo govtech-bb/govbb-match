@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Find your opportunities — alpha.gov.bb</title>
+<link rel="stylesheet" href="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/styles.css" />
+<link rel="stylesheet" href="/shared/styles.css" />
+</head>
+<body class="govbb-page">
+  <div>
+    <div class="govbb-official-banner">
+      <div class="govbb-container govbb-official-banner__inner">
+        <div class="govbb-official-banner__crest">
+          <img class="govbb-official-banner__icon" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-creast.svg" alt="" />
+        </div>
+        <div class="govbb-official-banner__text"><span>Official government website</span></div>
+      </div>
+    </div>
+
+    <div class="govbb-status-banner govbb-status-banner--alpha" role="status" aria-live="polite">
+      <div class="govbb-container"><p>This page is in <a class="govbb-link govbb-link--secondary" href="#">Alpha</a>.</p></div>
+    </div>
+
+    <header class="govbb-header">
+      <div class="govbb-container govbb-header__inner">
+        <a href="/" aria-label="Go to the homepage">
+          <img class="govbb-header__logo" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-logo.svg" alt="GOVBB" />
+        </a>
+      </div>
+    </header>
+  </div>
+
+  <main class="govbb-page__main">
+    <div class="govbb-container app-page">
+      <nav class="govbb-breadcrumbs" aria-label="Breadcrumb">
+        <ol class="govbb-breadcrumbs__list">
+          <li class="govbb-breadcrumbs__item"><a class="govbb-breadcrumbs__link" href="/">Home</a></li>
+          <li class="govbb-breadcrumbs__item" aria-current="page">Find your opportunities</li>
+        </ol>
+      </nav>
+
+      <div class="app-page__heading">
+        <span class="app-page__service-title govbb-text-body">Opportunities Service</span>
+        <h1 class="govbb-text-display">Find your opportunities</h1>
+        <p class="govbb-text-body">Chat with the assistant. It will ask a few questions and suggest programmes that fit you.</p>
+      </div>
+
+      <section class="chat" aria-label="Opportunities chatbot">
+        <div class="chat__log" id="chat-log" role="log" aria-live="polite"></div>
+
+        <form class="chat__composer" id="chat-form" autocomplete="off">
+          <label class="govbb-visually-hidden" for="chat-input">Your message</label>
+          <textarea
+            class="chat__textarea"
+            id="chat-input"
+            name="message"
+            rows="1"
+            placeholder="Message the assistant…"
+            required
+          ></textarea>
+          <div class="chat__actions">
+            <button class="chat__icon-btn" type="button" id="mic-btn" aria-label="Start voice input" title="Voice input">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V20h2a1 1 0 1 1 0 2H9a1 1 0 1 1 0-2h2v-2.08A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"/>
+              </svg>
+            </button>
+            <button class="chat__icon-btn chat__icon-btn--primary" type="submit" id="send-btn" aria-label="Send message">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+        <p class="chat__hint govbb-text-caption" id="mic-status"></p>
+      </section>
+
+      <p class="govbb-text-body">
+        Or
+        <a class="govbb-link" href="/opportunities/">browse all opportunities</a>.
+      </p>
+
+      <div class="app-feedback">
+        <h3 class="govbb-text-h3">Was this helpful?</h3>
+        <p class="govbb-text-body">Tell us how we can improve the assistant.</p>
+        <a class="govbb-link govbb-link--secondary govbb-text-body" href="mailto:feedback@example.gov.bb">Send feedback</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="govbb-footer">
+    <div class="govbb-container govbb-footer__inner">
+      <nav class="govbb-footer__nav" aria-label="Footer">
+        <a class="govbb-footer__link" href="/">Home</a>
+        <a class="govbb-footer__link" href="/opportunities/">Browse</a>
+        <a class="govbb-footer__link" href="/admin/">Admin</a>
+      </nav>
+      <hr class="govbb-footer__divider" aria-hidden="true" />
+      <div class="govbb-footer__end">
+        <img class="govbb-footer__coat" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-creast.svg" alt="Government of Barbados Coat of Arms" />
+        <p class="govbb-footer__copy">© 2026 Government of Barbados</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/matcher/app.js"></script>
+</body>
+</html>

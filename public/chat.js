@@ -27,7 +27,16 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
 });
 
-append("bot", "Hi! I'm here to help you find opportunities. Tell me a bit about yourself — your age, what you're studying or working on, and what you're curious about.");
+// Suggestion chips → fill composer and submit
+document.querySelectorAll(".chip[data-prompt]").forEach((b) => {
+  b.addEventListener("click", () => {
+    cancelAutoSend();
+    input.value = b.dataset.prompt;
+    autosize();
+    form.requestSubmit();
+    input.focus();
+  });
+});
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();

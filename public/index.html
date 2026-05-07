@@ -23,20 +23,24 @@
     </div>
 
     <header class="govbb-header">
-      <div class="govbb-container govbb-header__inner">
+      <div class="govbb-container govbb-header__inner site-header">
         <a href="/" aria-label="Find your opportunities">
           <img class="govbb-header__logo" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-logo.svg" alt="GOVBB" />
         </a>
+        <nav class="site-nav" aria-label="Primary">
+          <a class="site-nav__link" href="/">Chat</a>
+          <a class="site-nav__link" href="/opportunities/">Browse</a>
+        </nav>
       </div>
     </header>
   </div>
 
   <main class="govbb-page__main">
-    <div class="govbb-container app-page">
-      <div class="app-page__heading">
-        <span class="app-page__service-title govbb-text-body">Opportunities Service</span>
-        <h1 class="govbb-text-display">Find your opportunities</h1>
-        <p class="govbb-text-body">Chat with the assistant. It will ask a few questions and suggest programmes that fit you.</p>
+    <div class="govbb-container hero-page">
+      <div class="hero">
+        <span class="hero__eyebrow">GOVERNMENT OF BARBADOS</span>
+        <h1 class="govbb-text-display hero__title">Hello. What opportunity are you looking for today?</h1>
+        <p class="govbb-text-body hero__subtitle">Tell us about yourself in your own words — your age, what you're studying or working on, and what you're curious about. We'll match you to scholarships, training, grants, and youth programmes.</p>
       </div>
 
       <section class="chat" aria-label="Opportunities chatbot">
@@ -49,7 +53,7 @@
             id="chat-input"
             name="message"
             rows="1"
-            placeholder="Message the assistant…"
+            placeholder="For example, I want training in graphic design…"
             required
           ></textarea>
           <div class="chat__actions">
@@ -65,12 +69,24 @@
             </button>
           </div>
         </form>
-        <p class="chat__hint govbb-text-caption" id="mic-status"></p>
+        <p class="chat__hint govbb-text-caption" id="mic-status">Press Enter to send. Shift + Enter for a new line.</p>
       </section>
 
-      <p class="govbb-text-body">
-        Or
-        <a class="govbb-link" href="/opportunities/">browse all opportunities</a>.
+      <div class="suggestions" id="suggestions">
+        <p class="suggestions__label govbb-text-body">Or start with one of these</p>
+        <div class="suggestions__chips">
+          <button type="button" class="chip" data-prompt="I'm looking for a scholarship">Find a scholarship</button>
+          <button type="button" class="chip" data-prompt="I want to start a business">Start a business</button>
+          <button type="button" class="chip" data-prompt="I need job training">Get job training</button>
+          <button type="button" class="chip" data-prompt="I want to volunteer in my community">Volunteer in my community</button>
+          <button type="button" class="chip" data-prompt="Show me arts and design programmes">Arts &amp; design programmes</button>
+          <button type="button" class="chip" data-prompt="I'm looking for a summer camp for my child">Summer camp for my child</button>
+        </div>
+      </div>
+
+      <p class="hero__alt govbb-text-body">
+        Would rather see a list?
+        <a class="govbb-link" href="/opportunities/">Browse all opportunities →</a>
       </p>
     </div>
   </main>

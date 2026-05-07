@@ -105,7 +105,7 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
 });
 
-append("bot", "Hi! I'm here to help you find opportunities. Tell me a bit about yourself — your age, and what you're interested in (e.g., arts, tech, business, sports, community, education).");
+append("bot", "Hi! Tell us your age and interests, and we’ll find the right path for you.");
 
 // ---------- Parsing ----------
 function parseAge(text) {
@@ -646,12 +646,18 @@ if (SR) {
         stream.getTracks().forEach((t) => t.stop());
         listening = false;
         micBtn.classList.remove("is-recording");
-        micStatus.textContent = "Transcribing…";
         const blob = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
-        const fd = new FormData();
-        fd.append("audio", blob, "voice.webm");
+        if (blob.size < 1024) {
+          micStatus.textContent = "No audio captured. Hold the mic button longer and try again.";
+          return;
+        }
+        micStatus.textContent = "Transcribing…";
         try {
-          const res = await fetch("/api/transcribe", { method: "POST", body: fd });
+          const res = await fetch("/api/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": blob.type || "audio/webm" },
+            body: blob,
+          });
           if (!res.ok) {
             const { error } = await res.json().catch(() => ({}));
             micStatus.textContent = `Transcription unavailable: ${error || res.statusText}`;
@@ -666,7 +672,7 @@ if (SR) {
           micStatus.textContent = `Transcription failed: ${err.message}`;
         }
       });
-      mediaRecorder.start();
+      mediaRecorder.start(250);
     } catch (err) {
       micStatus.textContent = `Could not start recorder: ${err.message}`;
     }

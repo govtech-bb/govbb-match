@@ -12,6 +12,10 @@ const micStatus = document.getElementById("mic-status");
 
 const AUTO_SEND_DELAY_MS = 1500;
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const INITIAL_PLACEHOLDER = input.placeholder;
+const RESPONSE_PLACEHOLDER = "type your response here...";
+const INITIAL_HINT = micStatus.textContent;
+let userHasInteracted = false;
 
 // ---------- Conversation state ----------
 const state = {
@@ -114,7 +118,14 @@ function autosize() {
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 200) + "px";
 }
-input.addEventListener("input", () => { autosize(); cancelAutoSend(); });
+input.addEventListener("input", () => {
+  if (!userHasInteracted) {
+    userHasInteracted = true;
+    if (micStatus.textContent === INITIAL_HINT) micStatus.textContent = "";
+  }
+  autosize();
+  cancelAutoSend();
+});
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
 });
@@ -129,9 +140,11 @@ function resetChat() {
   state.hasShownMatches = false;
   log.innerHTML = "";
   input.value = "";
+  input.placeholder = INITIAL_PLACEHOLDER;
   autosize();
   cancelAutoSend();
-  micStatus.textContent = "";
+  micStatus.textContent = INITIAL_HINT;
+  userHasInteracted = false;
   append("bot", INITIAL_GREETING);
 }
 
@@ -636,6 +649,7 @@ form.addEventListener("submit", (e) => {
   enterFullscreen();
   append("user", msg);
   input.value = "";
+  input.placeholder = RESPONSE_PLACEHOLDER;
   autosize();
   handleUserMessage(msg);
 });

@@ -56,7 +56,7 @@ function filter() {
 input.addEventListener("input", filter);
 
 (async () => {
-  opps = await fetch("/api/opportunities").then((r) => r.json());
+  opps = await fetch("/data/opportunities.json").then((r) => r.json());
   // Sort: deadline soonest first, then alpha.
   opps.sort((a, b) => {
     if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);

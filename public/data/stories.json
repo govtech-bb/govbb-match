@@ -1,0 +1,50 @@
+[
+  {
+    "id": "maria-cap",
+    "name": "Maria Bascombe",
+    "programme": "Community Arts Programme (CAP)",
+    "opportunityId": "cap",
+    "headline": "From hobby sketches to working graphic designer",
+    "quote": "CAP gave me the foundation I needed. Six months after finishing the drawing course, I was freelancing for local businesses.",
+    "summary": "Maria joined CAP at 19 with a notebook full of sketches and no formal training. Two years later she runs her own studio in Bridgetown.",
+    "video": "https://media1.tenor.com/m/0rroa5yoGKoAAAAd/pixar-disney.gif",
+    "poster": "https://images.unsplash.com/photo-1561070791-2526d30994b8?w=800&q=70",
+    "year": 2024
+  },
+  {
+    "id": "devon-byac",
+    "name": "Devon Springer",
+    "programme": "Barbados YouthADVANCE Corps",
+    "opportunityId": "byac",
+    "headline": "Two years that changed everything",
+    "quote": "I came in not sure what to do with my life. I left with a trade, a network, and discipline I never had before.",
+    "summary": "Devon completed the residential year and apprenticed with a marine engineering firm. He's now a junior technician.",
+    "video": "https://media1.tenor.com/m/0rroa5yoGKoAAAAd/pixar-disney.gif",
+    "poster": "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=70",
+    "year": 2025
+  },
+  {
+    "id": "akeem-yes",
+    "name": "Akeem Holder",
+    "programme": "Youth Entrepreneurship Scheme (YES)",
+    "opportunityId": "yes",
+    "headline": "Idea to incorporated in nine months",
+    "quote": "The YES officers walked me through everything — registration, costing, even my first pitch.",
+    "summary": "Akeem launched a sustainable packaging startup with mentorship and seed funding facilitated through YES.",
+    "video": "https://media1.tenor.com/m/0rroa5yoGKoAAAAd/pixar-disney.gif",
+    "poster": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=70",
+    "year": 2025
+  },
+  {
+    "id": "shanice-pathways",
+    "name": "Shanice Cumberbatch",
+    "programme": "Pathways Employability Programme",
+    "opportunityId": "pathways",
+    "headline": "First job, first paycheck",
+    "quote": "I'd been out of school a year and applying everywhere. Pathways got me an attachment that turned into a permanent role.",
+    "summary": "Shanice was placed at a hospitality firm and converted to full-time within four months.",
+    "video": "https://media1.tenor.com/m/0rroa5yoGKoAAAAd/pixar-disney.gif",
+    "poster": "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=70",
+    "year": 2024
+  }
+]

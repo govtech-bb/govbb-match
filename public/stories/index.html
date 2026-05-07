@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Opportunity — alpha.gov.bb</title>
+<title>Success stories — alpha.gov.bb</title>
 <link rel="stylesheet" href="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/styles.css" />
 <link rel="stylesheet" href="/shared/styles.css" />
 </head>
@@ -30,22 +30,37 @@
         <nav class="site-nav" aria-label="Primary">
           <a class="site-nav__link" href="/">Chat</a>
           <a class="site-nav__link" href="/opportunities/">Browse</a>
-          <a class="site-nav__link" href="/stories/">Stories</a>
+          <a class="site-nav__link" href="/stories/" aria-current="page">Stories</a>
         </nav>
       </div>
     </header>
   </div>
 
   <main class="govbb-page__main">
-    <div class="govbb-container service-page" id="root"></div>
+    <div class="govbb-container app-page">
+      <nav class="govbb-breadcrumbs" aria-label="Breadcrumb">
+        <ol class="govbb-breadcrumbs__list">
+          <li class="govbb-breadcrumbs__item"><a class="govbb-breadcrumbs__link" href="/">Home</a></li>
+          <li class="govbb-breadcrumbs__item" aria-current="page">Success stories</li>
+        </ol>
+      </nav>
+
+      <div class="app-page__heading">
+        <span class="app-page__service-title govbb-text-body">Opportunities Service</span>
+        <h1 class="govbb-text-display">Success stories</h1>
+        <p class="govbb-text-body">Real Barbadians sharing how government opportunities changed their lives.</p>
+      </div>
+
+      <div class="stories" id="stories" aria-live="polite"></div>
+    </div>
   </main>
 
   <footer class="govbb-footer">
     <div class="govbb-container govbb-footer__inner">
       <nav class="govbb-footer__nav" aria-label="Footer">
-        <a class="govbb-footer__link" href="/">Home</a>
+        <a class="govbb-footer__link" href="/">Chat</a>
         <a class="govbb-footer__link" href="/opportunities/">Browse</a>
-        <a class="govbb-footer__link" href="/matcher/">Chat</a>
+        <a class="govbb-footer__link" href="/stories/">Stories</a>
       </nav>
       <hr class="govbb-footer__divider" aria-hidden="true" />
       <div class="govbb-footer__end">
@@ -55,7 +70,6 @@
     </div>
   </footer>
 
-  <script src="/opportunity/schemas.js"></script>
-  <script src="/opportunity/app.js"></script>
+  <script src="/stories/app.js"></script>
 </body>
 </html>

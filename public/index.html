@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Opportunities — alpha.gov.bb</title>
+<title>Find your opportunities — alpha.gov.bb</title>
 <link rel="stylesheet" href="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/styles.css" />
 <link rel="stylesheet" href="/shared/styles.css" />
 </head>
@@ -14,64 +14,89 @@
         <div class="govbb-official-banner__crest">
           <img class="govbb-official-banner__icon" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-creast.svg" alt="" />
         </div>
-        <div class="govbb-official-banner__text">
-          <span>Official government website</span>
-        </div>
+        <div class="govbb-official-banner__text"><span>Official government website</span></div>
       </div>
     </div>
 
-    <div class="govbb-status-banner govbb-status-banner--alpha" role="status" aria-label="alpha status banner" aria-live="polite">
-      <div class="govbb-container">
-        <p>This page is in <a class="govbb-link govbb-link--secondary" href="#">Alpha</a>.</p>
-      </div>
+    <div class="govbb-status-banner govbb-status-banner--alpha" role="status" aria-live="polite">
+      <div class="govbb-container"><p>This page is in <a class="govbb-link govbb-link--secondary" href="#">Alpha</a>.</p></div>
     </div>
 
     <header class="govbb-header">
-      <div class="govbb-container govbb-header__inner">
-        <a href="/" aria-label="Go to the homepage">
+      <div class="govbb-container govbb-header__inner site-header">
+        <a href="/" aria-label="Find your opportunities">
           <img class="govbb-header__logo" src="https://unpkg.com/@govtech-bb/styles@1.0.0-alpha.16/dist/assets/images/govbb-logo.svg" alt="GOVBB" />
         </a>
+        <nav class="site-nav" aria-label="Primary">
+          <a class="site-nav__link" href="/">Chat</a>
+          <a class="site-nav__link" href="/opportunities/">Browse</a>
+          <a class="site-nav__link" href="/stories/">Stories</a>
+        </nav>
       </div>
     </header>
   </div>
 
   <main class="govbb-page__main">
     <div class="govbb-container app-page">
-      <div class="app-page__heading">
-        <span class="app-page__service-title govbb-text-body">Opportunities Service</span>
-        <h1 class="govbb-text-display">Find youth and community opportunities</h1>
-        <p class="govbb-text-body">Discover scholarships, training, grants, and programmes from the Government of Barbados.</p>
+      <div class="hero">
+        <span class="hero__eyebrow">GOVERNMENT OF BARBADOS</span>
+        <h1 class="govbb-text-display hero__title">Hello. What opportunity are you looking for today?</h1>
+        <p class="govbb-text-body hero__subtitle">Tell us about yourself in your own words — your age, what you're studying or working on, and what you're curious about. We'll match you to scholarships, training, grants, and youth programmes.</p>
       </div>
 
-      <ul class="govbb-list opps-list">
-        <li class="opps-list__item">
-          <a class="govbb-link govbb-link--default opps-list__title" href="/matcher/">Chat with the opportunities assistant</a>
-          <p class="govbb-text-body">Tell us a bit about yourself and we'll suggest programmes that fit.</p>
-        </li>
-        <li class="opps-list__item">
-          <a class="govbb-link govbb-link--default opps-list__title" href="/opportunities/">Browse all opportunities</a>
-          <p class="govbb-text-body">See the full list, filterable by name, tag, or category.</p>
-        </li>
-        <li class="opps-list__item">
-          <a class="govbb-link govbb-link--default opps-list__title" href="/admin/">Manage opportunities</a>
-          <p class="govbb-text-body">Admin view: add, review, and remove programmes.</p>
-        </li>
-      </ul>
+      <section class="chat" aria-label="Opportunities chatbot">
+        <div class="chat__log" id="chat-log" role="log" aria-live="polite"></div>
 
-      <div class="app-feedback">
-        <h3 class="govbb-text-h3">Help us improve</h3>
-        <p class="govbb-text-body">This is a prototype. Your feedback will shape the real service.</p>
-        <a class="govbb-link govbb-link--secondary govbb-text-body" href="mailto:feedback@example.gov.bb">Send feedback</a>
+        <form class="chat__composer" id="chat-form" autocomplete="off">
+          <label class="govbb-visually-hidden" for="chat-input">Your message</label>
+          <textarea
+            class="chat__textarea"
+            id="chat-input"
+            name="message"
+            rows="1"
+            placeholder="For example, I want training in graphic design…"
+            required
+          ></textarea>
+          <div class="chat__actions">
+            <button class="chat__icon-btn" type="button" id="mic-btn" aria-label="Start voice input" title="Voice input">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V20h2a1 1 0 1 1 0 2H9a1 1 0 1 1 0-2h2v-2.08A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"/>
+              </svg>
+            </button>
+            <button class="chat__icon-btn chat__icon-btn--primary" type="submit" id="send-btn" aria-label="Send message">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+        <p class="chat__hint govbb-text-caption" id="mic-status">Press Enter to send. Shift + Enter for a new line.</p>
+      </section>
+
+      <div class="suggestions" id="suggestions">
+        <p class="suggestions__label govbb-text-body">Or start with one of these</p>
+        <div class="suggestions__chips">
+          <button type="button" class="chip" data-prompt="I'm looking for a scholarship">Find a scholarship</button>
+          <button type="button" class="chip" data-prompt="I want to start a business">Start a business</button>
+          <button type="button" class="chip" data-prompt="I need job training">Get job training</button>
+          <button type="button" class="chip" data-prompt="I want to volunteer in my community">Volunteer in my community</button>
+          <button type="button" class="chip" data-prompt="Show me arts and design programmes">Arts &amp; design programmes</button>
+          <button type="button" class="chip" data-prompt="I'm looking for a summer camp for my child">Summer camp for my child</button>
+        </div>
       </div>
+
+      <p class="hero__alt govbb-text-body">
+        Would rather see a list?
+        <a class="govbb-link" href="/opportunities/">Browse all opportunities →</a>
+      </p>
     </div>
   </main>
 
   <footer class="govbb-footer">
     <div class="govbb-container govbb-footer__inner">
       <nav class="govbb-footer__nav" aria-label="Footer">
-        <a class="govbb-footer__link" href="/">Home</a>
-        <a class="govbb-footer__link" href="/admin/">Admin</a>
-        <a class="govbb-footer__link" href="/matcher/">Matcher</a>
+        <a class="govbb-footer__link" href="/">Chat</a>
+        <a class="govbb-footer__link" href="/opportunities/">Browse</a>
       </nav>
       <hr class="govbb-footer__divider" aria-hidden="true" />
       <div class="govbb-footer__end">
@@ -80,5 +105,7 @@
       </div>
     </div>
   </footer>
+
+  <script src="/chat.js"></script>
 </body>
 </html>

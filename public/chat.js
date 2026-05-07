@@ -660,3 +660,13 @@ if (SR) {
   });
   micStatus.textContent = "Voice uses recorded audio in this browser. Chrome/Edge/Safari give live transcription.";
 }
+// --- Suggestion chips (from main: fill composer + auto-send) ---
+document.querySelectorAll(".chip[data-prompt]").forEach((b) => {
+  b.addEventListener("click", () => {
+    cancelAutoSend();
+    input.value = b.dataset.prompt;
+    autosize();
+    form.requestSubmit();
+    input.focus();
+  });
+});

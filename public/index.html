@@ -40,12 +40,31 @@
     <div class="govbb-container app-page">
       <div class="hero">
         <span class="hero__eyebrow">GOVERNMENT OF BARBADOS</span>
-        <h1 class="govbb-text-display hero__title">Hello. What opportunity are you looking for today?</h1>
-        <p class="govbb-text-body hero__subtitle">Tell us about yourself in your own words — your age, what you're studying or working on, and what you're curious about. We'll match you to scholarships, training, grants, and youth programmes.</p>
+        <h1 class="govbb-text-display hero__title">How can we help you take your next step?</h1>
+        <p class="govbb-text-body hero__subtitle">Start a business, apply for a scholarship, learn new skills or volunteer in your community.</p>
       </div>
 
       <section class="chat" aria-label="Opportunities chatbot">
+        <div class="chat__topbar">
+          <button type="button" class="chat__icon-btn" id="chat-exit" aria-label="Close chat" title="Close chat">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.3 6.3-6.3z"/>
+            </svg>
+          </button>
+          <span class="govbb-text-caption">Opportunities assistant</span>
+        </div>
+
         <div class="chat__log" id="chat-log" role="log" aria-live="polite"></div>
+
+        <div class="chat__quick-replies" id="quick-replies" aria-label="Quick replies">
+          <span class="govbb-text-caption chat__quick-label">Or start with</span>
+          <button type="button" class="chip chip--sm" data-prompt="I'm looking for a scholarship">Find a scholarship</button>
+          <button type="button" class="chip chip--sm" data-prompt="I want to start a business">Start a business</button>
+          <button type="button" class="chip chip--sm" data-prompt="I need job training">Get job training</button>
+          <button type="button" class="chip chip--sm" data-prompt="I want to volunteer in my community">Volunteer</button>
+          <button type="button" class="chip chip--sm" data-prompt="Show me arts and design programmes">Arts &amp; design</button>
+          <button type="button" class="chip chip--sm" data-prompt="I'm looking for a summer camp for my child">Summer camp</button>
+        </div>
 
         <form class="chat__composer" id="chat-form" autocomplete="off">
           <label class="govbb-visually-hidden" for="chat-input">Your message</label>
@@ -72,18 +91,6 @@
         </form>
         <p class="chat__hint govbb-text-caption" id="mic-status">Press Enter to send. Shift + Enter for a new line.</p>
       </section>
-
-      <div class="suggestions" id="suggestions">
-        <p class="suggestions__label govbb-text-body">Or start with one of these</p>
-        <div class="suggestions__chips">
-          <button type="button" class="chip" data-prompt="I'm looking for a scholarship">Find a scholarship</button>
-          <button type="button" class="chip" data-prompt="I want to start a business">Start a business</button>
-          <button type="button" class="chip" data-prompt="I need job training">Get job training</button>
-          <button type="button" class="chip" data-prompt="I want to volunteer in my community">Volunteer in my community</button>
-          <button type="button" class="chip" data-prompt="Show me arts and design programmes">Arts &amp; design programmes</button>
-          <button type="button" class="chip" data-prompt="I'm looking for a summer camp for my child">Summer camp for my child</button>
-        </div>
-      </div>
 
       <p class="hero__alt govbb-text-body">
         Would rather see a list?

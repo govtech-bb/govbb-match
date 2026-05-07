@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+*.log
+
+# Whisper.cpp models — download separately, not committed.
+models/
+*.bin

@@ -259,17 +259,11 @@ function renderForm(opp) {
       render();
       return;
     }
-    // Final submit
-    const res = await fetch("/api/applications", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ opportunityId: opp.id, opportunityTitle: opp.title, data: merged }),
-    });
-    if (!res.ok) { alert("Failed to submit. Please try again."); return; }
-    const body = await res.json();
+    // POC: no server submission. Generate a local reference and show confirmation.
+    const reference = "APP-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
     clearDraft(opp.id);
     setStep("done");
-    history.replaceState({}, "", `?id=${encodeURIComponent(opp.id)}&step=done&ref=${encodeURIComponent(body.reference)}`);
+    history.replaceState({}, "", `?id=${encodeURIComponent(opp.id)}&step=done&ref=${encodeURIComponent(reference)}`);
     render();
   });
 }
@@ -319,7 +313,7 @@ let OPPS = [];
 async function render() {
   const id = qs("id");
   if (!id) { renderNotFound(""); return; }
-  if (!OPPS.length) OPPS = await fetch("/api/opportunities").then((r) => r.json());
+  if (!OPPS.length) OPPS = await fetch("/data/opportunities.json").then((r) => r.json());
   const opp = OPPS.find((o) => o.id === id);
   if (!opp) { renderNotFound(id); return; }
 

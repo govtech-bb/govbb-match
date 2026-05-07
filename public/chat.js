@@ -317,15 +317,42 @@ function initDeck(deckEl, matches) {
   refreshStack();
 }
 
+// Score a single opportunity vs. the user's answers. Mirrors the old
+// /api/match server logic — kept client-side so this works as a static POC.
+function scoreOpp(opp, answers) {
+  let score = 0;
+  const reasons = [];
+  const elig = opp.eligibility || {};
+  if (answers.age != null) {
+    if (elig.ageMin != null && answers.age < elig.ageMin) return { score: -1, reasons: ["below min age"] };
+    if (elig.ageMax != null && answers.age > elig.ageMax) return { score: -1, reasons: ["above max age"] };
+    if (elig.ageMin != null || elig.ageMax != null) { score += 1; reasons.push("age fits"); }
+  }
+  if (answers.citizenship && elig.citizenship && answers.citizenship !== elig.citizenship) {
+    return { score: -1, reasons: ["citizenship mismatch"] };
+  }
+  const userInterests = (answers.interests || []).map((s) => s.toLowerCase());
+  const oppInterests = (elig.interests || []).map((s) => s.toLowerCase());
+  const tagPool = new Set([...(opp.tags || []).map((s) => s.toLowerCase()), ...oppInterests]);
+  const matched = userInterests.filter((i) => tagPool.has(i));
+  score += matched.length * 2;
+  if (matched.length) reasons.push(`matches: ${matched.join(", ")}`);
+  return { score, reasons };
+}
+
+let _oppsCache = null;
+async function loadOpps() {
+  if (!_oppsCache) _oppsCache = fetch("/data/opportunities.json").then((r) => r.json());
+  return _oppsCache;
+}
+
 async function fetchMatches() {
-  const body = { age: state.age, interests: state.interests };
-  const res = await fetch("/api/match", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`Match API error: ${res.status}`);
-  return res.json();
+  const answers = { age: state.age, interests: state.interests };
+  const opps = await loadOpps();
+  return opps
+    .map((o) => ({ ...o, _score: scoreOpp(o, answers) }))
+    .filter((o) => o._score.score >= 0)
+    .sort((a, b) => b._score.score - a._score.score);
 }
 
 // ---------- Application flow ----------
@@ -364,28 +391,14 @@ async function submitApplication() {
   const n = selected.length;
   const pending = append("bot", `Submitting ${n} application${n === 1 ? "" : "s"}…`);
 
+  // POC: no server submission — generate a local reference per opportunity.
+  // Same shape (APP-XXXX-YYYY) as the old /api/applications endpoint so any
+  // downstream UI keeps working.
   const newRefs = [];
   const failed = [];
   for (const opp of selected) {
-    try {
-      const res = await fetch("/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          opportunityId: opp.id,
-          opportunityTitle: opp.title,
-          data: { ...answers, age: state.age, interests: state.interests },
-        }),
-      });
-      if (!res.ok) {
-        const { error } = await res.json().catch(() => ({}));
-        throw new Error(error || res.statusText);
-      }
-      const record = await res.json();
-      newRefs.push({ title: opp.title, reference: record.reference });
-    } catch (err) {
-      failed.push({ id: opp.id, title: opp.title, error: err.message });
-    }
+    const reference = "APP-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+    newRefs.push({ title: opp.title, reference });
   }
 
   const allRefs = succeeded.concat(newRefs);

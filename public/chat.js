@@ -532,10 +532,20 @@ form.addEventListener("submit", (e) => {
   cancelAutoSend();
   const msg = input.value.trim();
   if (!msg) return;
+  enterFullscreen();
   append("user", msg);
   input.value = "";
   autosize();
   handleUserMessage(msg);
+});
+
+// Fullscreen chat mode — engages on first user message.
+function enterFullscreen() { document.body.classList.add("chat-active"); }
+function exitFullscreen() { document.body.classList.remove("chat-active"); }
+const exitBtn = document.getElementById("chat-exit");
+if (exitBtn) exitBtn.addEventListener("click", exitFullscreen);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.body.classList.contains("chat-active")) exitFullscreen();
 });
 
 // ---------- Auto-send timer ----------

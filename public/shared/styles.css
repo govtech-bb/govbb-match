@@ -266,6 +266,67 @@
   scroll-behavior: smooth;
 }
 .chat__log:empty { display: none; }
+.chat__topbar { display: none; }
+
+/* Quick replies row inside chat */
+.chat__quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  align-items: center;
+  padding-top: var(--spacing-xxs);
+}
+.chat__quick-label {
+  color: var(--color-mid-grey-00);
+  margin-right: var(--spacing-xs);
+}
+.chip--sm {
+  font-size: 0.85rem;
+  padding: var(--spacing-xxs) var(--spacing-s);
+}
+
+/* Fullscreen / immersive chat — body.chat-active toggled by JS on first message */
+body.chat-active .hero,
+body.chat-active .hero__alt,
+body.chat-active .govbb-status-banner,
+body.chat-active .govbb-footer,
+body.chat-active .govbb-official-banner { display: none; }
+body.chat-active .govbb-page__main { padding: 0; }
+body.chat-active .app-page { padding: 0; gap: 0; max-width: none; }
+body.chat-active .govbb-container.app-page { padding-inline: 0; }
+
+body.chat-active .chat {
+  position: fixed;
+  inset: 4.5rem 0 0 0;
+  border: 0;
+  border-radius: 0;
+  padding: var(--spacing-m) clamp(var(--spacing-s), 5vw, var(--spacing-xl));
+  z-index: 5;
+}
+body.chat-active .chat__topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-s);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-grey-00);
+  margin-bottom: var(--spacing-xs);
+  color: var(--color-mid-grey-00);
+}
+body.chat-active .chat__log {
+  flex: 1;
+  max-height: none;
+  min-height: 0;
+  padding-block: var(--spacing-s);
+}
+body.chat-active .chat__quick-replies {
+  border-top: 1px solid var(--color-grey-00);
+  padding-top: var(--spacing-s);
+}
+body.chat-active .chat__composer {
+  border: 2px solid var(--color-grey-00);
+  border-radius: 1.25rem;
+  padding: var(--spacing-xs);
+}
 
 /* Message rows: bubbles, bot left (teal), user right (yellow) */
 .msg {

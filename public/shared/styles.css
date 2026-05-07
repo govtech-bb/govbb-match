@@ -91,6 +91,40 @@
   box-shadow: 0 0 0 4px var(--color-teal-10);
 }
 
+/* Success stories */
+.stories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+.story {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-m);
+}
+.story__media {
+  position: relative;
+  background: var(--color-grey-00);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+}
+.story__video { width: 100%; height: 100%; display: block; object-fit: cover; }
+.story__body { display: flex; flex-direction: column; gap: var(--spacing-s); }
+.story__meta { color: var(--color-mid-grey-00); margin: 0; letter-spacing: 0.05em; text-transform: uppercase; }
+.story__headline { margin: 0; }
+.story__quote {
+  margin: 0;
+  padding: var(--spacing-s) var(--spacing-m);
+  border-left: 4px solid var(--color-yellow-100);
+  background: var(--color-yellow-40);
+}
+.story__quote p { margin: 0; }
+.story__attribution { color: var(--color-mid-grey-00); margin-top: var(--spacing-xs); }
+@media (width >= 720px) {
+  .story { grid-template-columns: 1fr 1fr; gap: var(--spacing-l); align-items: start; }
+}
+
 /* Service start page (mirrors templates/service.html) */
 .service-page {
   padding-block: var(--spacing-m);

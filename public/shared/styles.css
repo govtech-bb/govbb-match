@@ -288,6 +288,7 @@
 /* Fullscreen / immersive chat — body.chat-active toggled by JS on first message */
 body.chat-active .hero,
 body.chat-active .hero__alt,
+body.chat-active .suggestions,
 body.chat-active .govbb-status-banner,
 body.chat-active .govbb-footer,
 body.chat-active .govbb-official-banner { display: none; }
@@ -318,10 +319,7 @@ body.chat-active .chat__log {
   min-height: 0;
   padding-block: var(--spacing-s);
 }
-body.chat-active .chat__quick-replies {
-  border-top: 1px solid var(--color-grey-00);
-  padding-top: var(--spacing-s);
-}
+body.chat-active .chat__quick-replies { display: none; }
 body.chat-active .chat__composer {
   border: 2px solid var(--color-grey-00);
   border-radius: 1.25rem;

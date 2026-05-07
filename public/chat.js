@@ -28,12 +28,26 @@ function refreshAllDeckFooters() {
   });
 }
 
+const BARBADOS_PARISHES = [
+  "Christ Church",
+  "Saint Andrew",
+  "Saint George",
+  "Saint James",
+  "Saint John",
+  "Saint Joseph",
+  "Saint Lucy",
+  "Saint Michael",
+  "Saint Peter",
+  "Saint Philip",
+  "Saint Thomas",
+];
+
 // Questions we ask before submitting an application.
 const APPLICATION_QUESTIONS = [
   { key: "fullName", prompt: "What's your full name?", validate: (v) => v.trim().length >= 2 || "Please enter your full name." },
   { key: "email", prompt: "What's your email address?", validate: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) || "That doesn't look like a valid email — try again." },
   { key: "phone", prompt: "What's the best phone number to reach you on?", validate: (v) => v.replace(/\D/g, "").length >= 7 || "Please enter a valid phone number." },
-  { key: "parish", prompt: "Which parish do you live in?", validate: (v) => v.trim().length >= 2 || "Please enter your parish." },
+  { key: "parish", prompt: "Which parish do you live in?", options: BARBADOS_PARISHES, validate: (v) => v.trim().length >= 2 || "Please enter your parish." },
   { key: "motivation", prompt: "In a sentence or two, why are you interested in this opportunity?", validate: (v) => v.trim().length >= 5 || "Please give a short reason (at least a few words)." },
 ];
 
@@ -105,7 +119,23 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
 });
 
-append("bot", "Hi! Tell us your age and interests, and we’ll find the right path for you.");
+const INITIAL_GREETING = "Hi! Tell us your age and interests, and we’ll find the right path for you.";
+
+function resetChat() {
+  state.age = null;
+  state.interests = [];
+  state.selected = [];
+  state.applying = null;
+  state.hasShownMatches = false;
+  log.innerHTML = "";
+  input.value = "";
+  autosize();
+  cancelAutoSend();
+  micStatus.textContent = "";
+  append("bot", INITIAL_GREETING);
+}
+
+append("bot", INITIAL_GREETING);
 
 // ---------- Parsing ----------
 function parseAge(text) {
@@ -149,6 +179,52 @@ function mergeInterests(existing, incoming) {
   return Array.from(set);
 }
 
+// ---------- Success stories (deterministic per opportunity) ----------
+const SUCCESS_PEOPLE = [
+  { name: "Shanice", gender: "women", idx: 32 },
+  { name: "Kemar", gender: "men", idx: 14 },
+  { name: "Aliyah", gender: "women", idx: 47 },
+  { name: "Renaldo", gender: "men", idx: 22 },
+  { name: "Imani", gender: "women", idx: 5 },
+  { name: "Tre", gender: "men", idx: 67 },
+  { name: "Jada", gender: "women", idx: 12 },
+  { name: "Khalil", gender: "men", idx: 41 },
+  { name: "Kayla", gender: "women", idx: 70 },
+  { name: "Zane", gender: "men", idx: 88 },
+  { name: "Arielle", gender: "women", idx: 19 },
+  { name: "Damarion", gender: "men", idx: 53 },
+];
+
+const SUCCESS_QUOTES = [
+  "{program} helped me find work I'm proud of.",
+  "Joining {program} gave me confidence I never had before.",
+  "I made friends for life through {program} — and got a real skill out of it.",
+  "Without {program}, I wouldn't be where I am today.",
+  "{program} opened doors I didn't know existed.",
+  "I came in shy and left ready to lead, thanks to {program}.",
+  "{program} taught me more in a few months than years of school did.",
+  "I'm running my own thing now — all because {program} pushed me.",
+  "{program} showed me the community has my back.",
+  "Best decision I ever made was applying to {program}.",
+];
+
+function hashString(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function successStory(opp) {
+  const h = hashString(opp.id || opp.title || "x");
+  const person = SUCCESS_PEOPLE[h % SUCCESS_PEOPLE.length];
+  const template = SUCCESS_QUOTES[(h >> 5) % SUCCESS_QUOTES.length];
+  return {
+    name: person.name,
+    photo: `https://randomuser.me/api/portraits/${person.gender}/${person.idx}.jpg`,
+    quote: template.replace("{program}", opp.title),
+  };
+}
+
 // ---------- Rendering matches (Tinder-style swipeable deck) ----------
 function renderDeckHtml(matches) {
   if (!matches.length) {
@@ -160,6 +236,7 @@ function renderDeckHtml(matches) {
     const link = m.url
       ? `<a class="govbb-link match-card__link" href="${esc(m.url)}" target="_blank" rel="noopener">Learn more →</a>`
       : "";
+    const story = successStory(m);
     return `
       <article class="match-card" data-index="${i}" data-id="${esc(m.id)}" data-title="${esc(m.title)}">
         <div class="match-card__stamp match-card__stamp--like" aria-hidden="true">Save</div>
@@ -168,6 +245,13 @@ function renderDeckHtml(matches) {
         <p class="govbb-text-caption match-card__meta">${esc(m.category || "")}${reasons ? ` · ${esc(reasons)}` : ""}</p>
         <p class="govbb-text-body match-card__desc">${esc(m.description || "")}</p>
         ${link}
+        <figure class="match-card__story">
+          <img class="match-card__story-photo" src="${esc(story.photo)}" alt="Photo of ${esc(story.name)}, ${esc(m.title)} alumna/alumnus" loading="lazy" referrerpolicy="no-referrer" />
+          <figcaption class="match-card__story-caption">
+            <blockquote class="match-card__story-quote">“${esc(story.quote)}”</blockquote>
+            <cite class="match-card__story-name">— ${esc(story.name)}, alumni</cite>
+          </figcaption>
+        </figure>
       </article>`;
   }).join("");
   return `
@@ -383,8 +467,28 @@ function startApplication() {
 function askNextApplicationQuestion() {
   const q = APPLICATION_QUESTIONS[state.applying.step];
   if (!q) { submitApplication(); return; }
-  append("bot", q.prompt);
+  if (q.options && q.options.length) {
+    const pills = q.options.map((o) =>
+      `<button type="button" class="chat-pill" data-value="${esc(o)}">${esc(o)}</button>`
+    ).join("");
+    append("bot", q.prompt, `<div class="chat-pills" role="group" aria-label="${esc(q.prompt)}">${pills}</div>`);
+  } else {
+    append("bot", q.prompt);
+  }
 }
+
+// Pill click → treat as if the user typed that value.
+log.addEventListener("click", (e) => {
+  const btn = e.target.closest(".chat-pill");
+  if (!btn || btn.disabled) return;
+  if (!state.applying) return;
+  const value = btn.getAttribute("data-value") || "";
+  const group = btn.closest(".chat-pills");
+  if (group) group.querySelectorAll(".chat-pill").forEach((b) => (b.disabled = true));
+  btn.classList.add("is-selected");
+  append("user", value);
+  handleApplicationAnswer(value);
+});
 
 async function submitApplication() {
   const { selected, answers, succeeded } = state.applying;
@@ -469,16 +573,13 @@ function describeInterests(list) {
 async function handleUserMessage(text) {
   const lower = text.toLowerCase().trim();
 
-  if (state.applying) {
-    handleApplicationAnswer(text);
+  if (/^(reset|start over|restart|clear)\b/.test(lower)) {
+    resetChat();
     return;
   }
 
-  if (/^(reset|start over|restart|clear)\b/.test(lower)) {
-    state.age = null;
-    state.interests = [];
-    state.hasShownMatches = false;
-    append("bot", "Okay, starting fresh. How old are you, and what are you interested in?");
+  if (state.applying) {
+    handleApplicationAnswer(text);
     return;
   }
 

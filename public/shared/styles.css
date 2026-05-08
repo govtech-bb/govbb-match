@@ -555,6 +555,68 @@ body.chat-active .chat__composer {
   color: var(--color-mid-grey-00);
 }
 
+/* Fullscreen "Tinder app" mode for the bot bubble that holds the deck.
+   Toggled by JS adding .msg--deck-fullscreen on the .msg row, and
+   .deck-fullscreen-active on <body> so we can hide the chat behind it. */
+body.deck-fullscreen-active .chat__log > .msg:not(.msg--deck-fullscreen) { display: none; }
+body.deck-fullscreen-active .chat__composer,
+body.deck-fullscreen-active .chat__topbar,
+body.deck-fullscreen-active .chat__hint { display: none; }
+
+.msg--deck-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 60;
+  max-width: none !important;
+  width: 100vw;
+  margin: 0 !important;
+  padding: clamp(var(--spacing-m), 4vh, var(--spacing-xl)) var(--spacing-m) !important;
+  background: var(--color-background) !important;
+  border-radius: 0 !important;
+  align-self: stretch !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+  animation: deck-fullscreen-in 0.18s ease-out;
+}
+.msg--deck-fullscreen .msg__text {
+  width: 100%;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xxs);
+  background: transparent;
+}
+.msg--deck-fullscreen .match-deck { margin-top: 0; gap: var(--spacing-xs); }
+.msg--deck-fullscreen .match-deck__cards {
+  height: 70vh;
+}
+.msg--deck-fullscreen .match-card.match-card--top {
+  padding: var(--spacing-s);
+}
+.msg--deck-fullscreen { padding-bottom: 6rem !important; }
+
+/* Pin Skip / Save to the bottom of the viewport with a smaller font */
+.msg--deck-fullscreen .match-deck__actions {
+  position: fixed;
+  bottom: var(--spacing-s);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 65;
+  margin: 0;
+  gap: var(--spacing-s);
+}
+.msg--deck-fullscreen .match-deck__actions .match-deck__btn {
+  font-size: 0.8rem;
+  padding: var(--spacing-xxs) var(--spacing-m);
+}
+@keyframes deck-fullscreen-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
 /* Application receipt callout inside a bot bubble */
 .application-receipt {
   margin: var(--spacing-s) 0;

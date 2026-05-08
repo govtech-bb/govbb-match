@@ -44,6 +44,7 @@ const state = {
   interests: [],
   hasShownMatches: false,
   selected: [],   // [{id, title}] queued from swipe-right; cleared when application starts
+  maybes: [],     // [{id, title, m}] queued from swipe-down; reviewed before applying
   applying: null, // { selected: [...], step, answers }
 };
 
@@ -353,7 +354,8 @@ function successStory(opp) {
 }
 
 // ---------- Rendering matches (Tinder-style swipeable deck) ----------
-function renderDeckHtml(matches) {
+function renderDeckHtml(matches, opts = {}) {
+  const mode = opts.mode || "primary"; // "primary" | "review"
   if (!matches.length) {
     return `<p class="govbb-text-body" style="margin-top:var(--spacing-s)">I couldn't find a match yet. Try adding a different interest, or <a class="govbb-link" href="/opportunities/">browse all opportunities</a>.</p>`;
   }
@@ -364,10 +366,14 @@ function renderDeckHtml(matches) {
       ? `<a class="govbb-link match-card__link" href="${esc(m.url)}" target="_blank" rel="noopener">Learn more →</a>`
       : "";
     const story = successStory(m);
+    const maybeStamp = mode === "primary"
+      ? `<div class="match-card__stamp match-card__stamp--maybe" aria-hidden="true">Maybe</div>`
+      : "";
     return `
       <article class="match-card" data-index="${i}" data-id="${esc(m.id)}" data-title="${esc(m.title)}">
-        <div class="match-card__stamp match-card__stamp--like" aria-hidden="true">Save</div>
-        <div class="match-card__stamp match-card__stamp--nope" aria-hidden="true">Skip</div>
+        <div class="match-card__stamp match-card__stamp--like" aria-hidden="true">${mode === "review" ? "Yes" : "Save"}</div>
+        <div class="match-card__stamp match-card__stamp--nope" aria-hidden="true">${mode === "review" ? "No" : "Skip"}</div>
+        ${maybeStamp}
         <h4 class="govbb-text-h4 match-card__title">${esc(m.title)}</h4>
         <p class="govbb-text-caption match-card__meta">${esc(m.category || "")}${reasons ? ` · ${esc(reasons)}` : ""}</p>
         <p class="govbb-text-body match-card__desc">${esc(m.description || "")}</p>
@@ -381,14 +387,25 @@ function renderDeckHtml(matches) {
         </figure>
       </article>`;
   }).join("");
+  const skipLabel = mode === "review" ? "✕ No" : "✕ Skip";
+  const saveLabel = mode === "review" ? "♥ Yes" : "♥ Save";
+  const skipAria = mode === "review" ? "No, not interested" : "Skip this opportunity";
+  const saveAria = mode === "review" ? "Yes, keep this opportunity" : "Save this opportunity to apply later";
+  const maybeBtn = mode === "primary"
+    ? `<button type="button" class="match-deck__btn match-deck__btn--maybe" aria-label="Maybe — review this later">? Maybe</button>`
+    : "";
+  const hint = mode === "review"
+    ? "Reviewing your maybes — swipe right for yes, left for no."
+    : "Right = save, left = skip, down = maybe. We'll revisit your maybes at the end.";
   return `
-    <div class="match-deck" data-deck>
+    <div class="match-deck" data-deck data-mode="${mode}">
       <div class="match-deck__cards">${cards}</div>
       <div class="match-deck__actions">
-        <button type="button" class="match-deck__btn match-deck__btn--skip" aria-label="Skip this opportunity">✕ Skip</button>
-        <button type="button" class="match-deck__btn match-deck__btn--save" aria-label="Save this opportunity to apply later">♥ Save</button>
+        <button type="button" class="match-deck__btn match-deck__btn--skip" aria-label="${skipAria}">${skipLabel}</button>
+        ${maybeBtn}
+        <button type="button" class="match-deck__btn match-deck__btn--save" aria-label="${saveAria}">${saveLabel}</button>
       </div>
-      <p class="match-deck__hint govbb-text-caption">Swipe right to save, left to skip. Apply to all your saved picks at the end.</p>
+      <p class="match-deck__hint govbb-text-caption">${hint}</p>
       <div class="match-deck__footer">
         <span class="match-deck__count" aria-live="polite">0 saved</span>
         <button type="button" class="match-deck__btn match-deck__btn--done" disabled>Apply to 0 selected</button>
@@ -396,11 +413,13 @@ function renderDeckHtml(matches) {
     </div>`;
 }
 
-function initDeck(deckEl, matches) {
+function initDeck(deckEl, matches, opts = {}) {
+  const mode = opts.mode || "primary"; // "primary" | "review"
   const stack = deckEl.querySelector(".match-deck__cards");
   const cards = Array.from(stack.querySelectorAll(".match-card"));
   const skipBtn = deckEl.querySelector(".match-deck__btn--skip");
   const saveBtn = deckEl.querySelector(".match-deck__btn--save");
+  const maybeBtn = deckEl.querySelector(".match-deck__btn--maybe");
   const doneBtn = deckEl.querySelector(".match-deck__btn--done");
   const countEl = deckEl.querySelector(".match-deck__count");
   const hint = deckEl.querySelector(".match-deck__hint");
@@ -408,12 +427,26 @@ function initDeck(deckEl, matches) {
   let dragging = false, startX = 0, startY = 0, dx = 0, dy = 0, topCard = null;
   let busy = false;
   const SWIPE_THRESHOLD = 110;
+  const DOWN_THRESHOLD = 130;
 
   function updateFooter() {
     const n = state.selected.length;
-    countEl.textContent = `${n} saved`;
-    doneBtn.disabled = n === 0 || !!state.applying;
-    doneBtn.textContent = `Apply to ${n} selected`;
+    const m = state.maybes.length;
+    let label;
+    if (mode === "primary" && m > 0) {
+      label = `${n} saved · ${m} maybe`;
+    } else {
+      label = `${n} saved`;
+    }
+    countEl.textContent = label;
+    doneBtn.disabled = (n === 0 && (mode !== "primary" || m === 0)) || !!state.applying;
+    if (mode === "primary" && n === 0 && m > 0) {
+      doneBtn.textContent = `Review ${m} maybe${m === 1 ? "" : "s"}`;
+    } else if (mode === "primary" && m > 0) {
+      doneBtn.textContent = `Review maybes & apply to ${n}`;
+    } else {
+      doneBtn.textContent = `Apply to ${n} selected`;
+    }
   }
   deckEl._refreshFooter = updateFooter;
 
@@ -438,20 +471,30 @@ function initDeck(deckEl, matches) {
   function showEmpty() {
     skipBtn.disabled = true;
     saveBtn.disabled = true;
+    if (maybeBtn) maybeBtn.disabled = true;
+    if (mode === "primary" && state.maybes.length > 0) {
+      hint.textContent = `Now let's review your ${state.maybes.length} maybe${state.maybes.length === 1 ? "" : "s"}…`;
+      if (!state.applying) setTimeout(() => { if (!state.applying) startMaybeReview(); }, 600);
+      return;
+    }
     if (state.selected.length > 0) {
       hint.textContent = `That's all of them! Click "Apply to ${state.selected.length} selected" below to continue.`;
-      // Auto-advance after a brief beat so users see the state.
       if (!state.applying) setTimeout(() => { if (!state.applying && state.selected.length) startApplication(); }, 500);
     } else {
-      hint.textContent = "That's everyone — and nothing was saved. Tell me a different interest, or type \"reset\" to start over.";
+      hint.textContent = "Nothing saved. Tell me a different interest, or type \"reset\" to start over.";
     }
   }
 
+  // direction: 1=right (save/yes), -1=left (skip/no), 0=down (maybe)
   function flyOff(direction, onDone) {
     const card = cards[index];
     if (!card) return;
     card.classList.add("is-flying");
-    card.style.transform = `translateX(${direction * 140}%) rotate(${direction * 18}deg)`;
+    if (direction === 0) {
+      card.style.transform = `translateY(140%) rotate(0deg)`;
+    } else {
+      card.style.transform = `translateX(${direction * 140}%) rotate(${direction * 18}deg)`;
+    }
     card.style.opacity = "0";
     setTimeout(() => {
       index += 1;
@@ -464,6 +507,8 @@ function initDeck(deckEl, matches) {
     if (busy || index >= cards.length) return;
     const m = matches[index];
     if (!m) return;
+    // Remove from maybes if it was there (review mode promoting a maybe).
+    state.maybes = state.maybes.filter((s) => s.id !== m.id);
     if (!state.selected.find((s) => s.id === m.id)) {
       state.selected.push({ id: m.id, title: m.title });
     }
@@ -472,8 +517,21 @@ function initDeck(deckEl, matches) {
   }
   function skipTopCard() {
     if (busy || index >= cards.length) return;
+    const m = matches[index];
+    if (m) state.maybes = state.maybes.filter((s) => s.id !== m.id);
     busy = true;
     flyOff(-1, () => { busy = false; });
+  }
+  function maybeTopCard() {
+    if (busy || index >= cards.length) return;
+    if (mode !== "primary") return;
+    const m = matches[index];
+    if (!m) return;
+    if (!state.maybes.find((s) => s.id === m.id)) {
+      state.maybes.push({ id: m.id, title: m.title, m });
+    }
+    busy = true;
+    flyOff(0, () => { busy = false; });
   }
 
   // ---- Pointer drag on the top card ----
@@ -492,25 +550,38 @@ function initDeck(deckEl, matches) {
     if (!dragging || !topCard) return;
     dx = e.clientX - startX;
     dy = e.clientY - startY;
-    topCard.style.transform = `translate(${dx}px, ${dy * 0.4}px) rotate(${dx * 0.06}deg)`;
+    const downDominant = mode === "primary" && dy > 0 && Math.abs(dy) > Math.abs(dx);
+    if (downDominant) {
+      topCard.style.transform = `translateY(${dy}px)`;
+    } else {
+      topCard.style.transform = `translate(${dx}px, ${dy * 0.4}px) rotate(${dx * 0.06}deg)`;
+    }
     const like = topCard.querySelector(".match-card__stamp--like");
     const nope = topCard.querySelector(".match-card__stamp--nope");
-    if (like) like.style.opacity = String(Math.max(0, Math.min(1, dx / 80)));
-    if (nope) nope.style.opacity = String(Math.max(0, Math.min(1, -dx / 80)));
+    const maybe = topCard.querySelector(".match-card__stamp--maybe");
+    if (downDominant) {
+      if (like) like.style.opacity = "0";
+      if (nope) nope.style.opacity = "0";
+      if (maybe) maybe.style.opacity = String(Math.max(0, Math.min(1, dy / 80)));
+    } else {
+      if (like) like.style.opacity = String(Math.max(0, Math.min(1, dx / 80)));
+      if (nope) nope.style.opacity = String(Math.max(0, Math.min(1, -dx / 80)));
+      if (maybe) maybe.style.opacity = "0";
+    }
   });
   function endDrag() {
     if (!dragging || !topCard) return;
     dragging = false;
     topCard.classList.remove("is-swiping");
-    if (Math.abs(dx) > SWIPE_THRESHOLD) {
+    const downDominant = mode === "primary" && dy > 0 && Math.abs(dy) > Math.abs(dx);
+    if (downDominant && dy > DOWN_THRESHOLD) {
+      maybeTopCard();
+    } else if (Math.abs(dx) > SWIPE_THRESHOLD) {
       if (dx > 0) saveTopCard();
       else skipTopCard();
     } else {
       topCard.style.transform = "";
-      const like = topCard.querySelector(".match-card__stamp--like");
-      const nope = topCard.querySelector(".match-card__stamp--nope");
-      if (like) like.style.opacity = "";
-      if (nope) nope.style.opacity = "";
+      topCard.querySelectorAll(".match-card__stamp").forEach((s) => (s.style.opacity = ""));
     }
     topCard = null;
   }
@@ -520,12 +591,42 @@ function initDeck(deckEl, matches) {
 
   skipBtn.addEventListener("click", skipTopCard);
   saveBtn.addEventListener("click", saveTopCard);
+  if (maybeBtn) maybeBtn.addEventListener("click", maybeTopCard);
   doneBtn.addEventListener("click", () => {
-    if (state.selected.length === 0 || state.applying) return;
+    if (state.applying) return;
+    if (mode === "primary" && state.maybes.length > 0) {
+      startMaybeReview();
+      return;
+    }
+    if (state.selected.length === 0) return;
     startApplication();
   });
 
   refreshStack();
+}
+
+function startMaybeReview() {
+  if (state.applying) return;
+  if (!state.maybes.length) {
+    if (state.selected.length) startApplication();
+    return;
+  }
+  collapseDeckFullscreen();
+  const reviewMatches = state.maybes.map((s) => s.m);
+  // Drain maybes — they get re-decided (yes → selected, no → discarded) in the new deck.
+  state.maybes = [];
+  refreshAllDeckFooters();
+  const intro = `Let's revisit your maybe${reviewMatches.length === 1 ? "" : "s"}. Yes keeps it, no drops it.`;
+  const pending = append("bot", "");
+  const msgText = pending.querySelector(".msg__text");
+  msgText.innerHTML = `${esc(intro)}${renderDeckHtml(reviewMatches, { mode: "review" })}`;
+  const deckEl = msgText.querySelector("[data-deck]");
+  if (deckEl) {
+    pending.classList.add("msg--deck-fullscreen");
+    document.body.classList.add("deck-fullscreen-active");
+    initDeck(deckEl, reviewMatches, { mode: "review" });
+  }
+  if (typeof speak === "function") speak(intro);
 }
 
 // Score a single opportunity vs. the user's answers. Mirrors the old

@@ -56,16 +56,6 @@
 
         <div class="chat__log" id="chat-log" role="log" aria-live="polite"></div>
 
-        <div class="chat__quick-replies" id="quick-replies" aria-label="Quick replies">
-          <span class="govbb-text-caption chat__quick-label">Or start with</span>
-          <button type="button" class="chip chip--sm" data-prompt="I'm looking for a scholarship">Find a scholarship</button>
-          <button type="button" class="chip chip--sm" data-prompt="I want to start a business">Start a business</button>
-          <button type="button" class="chip chip--sm" data-prompt="I need job training">Get job training</button>
-          <button type="button" class="chip chip--sm" data-prompt="I want to volunteer in my community">Volunteer</button>
-          <button type="button" class="chip chip--sm" data-prompt="Show me arts and design programmes">Arts &amp; design</button>
-          <button type="button" class="chip chip--sm" data-prompt="I'm looking for a summer camp for my child">Summer camp</button>
-        </div>
-
         <form class="chat__composer" id="chat-form" autocomplete="off">
           <label class="govbb-visually-hidden" for="chat-input">Your message</label>
           <textarea
@@ -73,7 +63,7 @@
             id="chat-input"
             name="message"
             rows="1"
-            placeholder="For example, I want training in graphic design…"
+            placeholder="Start typing here...."
             required
           ></textarea>
           <div class="chat__actions">
@@ -89,8 +79,14 @@
             </button>
           </div>
         </form>
-        <p class="chat__hint govbb-text-caption" id="mic-status">Press Enter to send. Shift + Enter for a new line.</p>
       </section>
+
+      <div class="chat__quick-replies" id="quick-replies" aria-label="Quick replies">
+        <span class="govbb-text-caption chat__quick-label">Or start with</span>
+        <button type="button" class="chip chip--sm" data-prompt="I'm looking for a scholarship">Find a scholarship</button>
+        <button type="button" class="chip chip--sm" data-prompt="I want to start a business">Start a business</button>
+        <button type="button" class="chip chip--sm" data-prompt="I need job training">Get job training</button>
+      </div>
 
       <p class="hero__alt govbb-text-body">
         Would rather see a list?

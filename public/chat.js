@@ -8,7 +8,7 @@ const log = document.getElementById("chat-log");
 const form = document.getElementById("chat-form");
 const input = document.getElementById("chat-input");
 const micBtn = document.getElementById("mic-btn");
-const micStatus = document.getElementById("mic-status");
+const micStatus = document.getElementById("mic-status") || { textContent: "", parentNode: null };
 
 const AUTO_SEND_DELAY_MS = 1500;
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -111,6 +111,17 @@ function append(role, text, extraHtml = "") {
   row.innerHTML = `<div class="msg__text govbb-text-body">${esc(text)}${extraHtml}</div>`;
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
+  return row;
+}
+
+// Bot reply with a brief "typing" delay + bouncing-dot animation.
+function botSay(text, extraHtml = "") {
+  const row = append("bot", "", `<span class="msg__typing" aria-label="Assistant is typing"><span></span><span></span><span></span></span>`);
+  const delay = 1000 + Math.random() * 800; // 1.0–1.8s
+  setTimeout(() => {
+    row.querySelector(".msg__text").innerHTML = `${esc(text)}${extraHtml}`;
+    log.scrollTop = log.scrollHeight;
+  }, delay);
   return row;
 }
 
@@ -456,7 +467,7 @@ async function fetchMatches() {
 function startApplication() {
   if (state.applying) return;
   if (!state.selected.length) {
-    append("bot", "You haven't saved any opportunities yet — swipe right (or click ♥ Save) on the ones you're interested in.");
+    botSay("You haven't saved any opportunities yet — swipe right (or click ♥ Save) on the ones you're interested in.");
     return;
   }
   state.applying = {
@@ -470,7 +481,7 @@ function startApplication() {
 
   const titles = state.applying.selected.map((s) => `• ${s.title}`).join("\n");
   const n = state.applying.selected.length;
-  append("bot",
+  botSay(
     `Great — you've picked ${n} opportunit${n === 1 ? "y" : "ies"}:\n${titles}\n\n` +
     `I'll just need a few details once and apply you to all of them. Type "cancel" any time to stop.`
   );
@@ -484,9 +495,9 @@ function askNextApplicationQuestion() {
     const pills = q.options.map((o) =>
       `<button type="button" class="chat-pill" data-value="${esc(o)}">${esc(o)}</button>`
     ).join("");
-    append("bot", q.prompt, `<div class="chat-pills" role="group" aria-label="${esc(q.prompt)}">${pills}</div>`);
+    botSay(q.prompt, `<div class="chat-pills" role="group" aria-label="${esc(q.prompt)}">${pills}</div>`);
   } else {
-    append("bot", q.prompt);
+    botSay(q.prompt);
   }
 }
 
@@ -558,7 +569,7 @@ function handleApplicationAnswer(text) {
     const n = state.applying.selected.length;
     state.applying = null;
     refreshAllDeckFooters();
-    append("bot", `Cancelled. The ${n} opportunit${n === 1 ? "y was" : "ies were"} not submitted. You can swipe again or type "reset" to start over.`);
+    botSay(`Cancelled. The ${n} opportunit${n === 1 ? "y was" : "ies were"} not submitted. You can swipe again or type "reset" to start over.`);
     return;
   }
   // After a partial failure, the form is already filled — typing "retry" just resubmits the failed ones.
@@ -570,7 +581,7 @@ function handleApplicationAnswer(text) {
   if (allAnswered) return; // ignore stray input while we're between submit/retry
   const q = APPLICATION_QUESTIONS[state.applying.step];
   const result = q.validate(text);
-  if (result !== true) { append("bot", result); return; }
+  if (result !== true) { botSay(result); return; }
   state.applying.answers[q.key] = text.trim();
   state.applying.step += 1;
   askNextApplicationQuestion();
@@ -614,12 +625,12 @@ async function handleUserMessage(text) {
 
   if (state.age == null) {
     const ack = acknowledgements.length ? acknowledgements.join(" ") + " " : "";
-    append("bot", `${ack}How old are you?`);
+    botSay(`${ack}How old are you?`);
     return;
   }
   if (state.interests.length === 0) {
     const ack = acknowledgements.length ? acknowledgements.join(" ") + " " : "";
-    append("bot", `${ack}What are you interested in? For example: ${SUGGESTED_INTERESTS.join(", ")}.`);
+    botSay(`${ack}What are you interested in? For example: ${SUGGESTED_INTERESTS.join(", ")}.`);
     return;
   }
 
@@ -655,7 +666,10 @@ form.addEventListener("submit", (e) => {
 });
 
 // Fullscreen chat mode — engages on first user message.
-function enterFullscreen() { document.body.classList.add("chat-active"); }
+function enterFullscreen() {
+  document.body.classList.add("chat-active");
+  if (micStatus.parentNode) micStatus.parentNode.removeChild(micStatus);
+}
 function exitFullscreen() { document.body.classList.remove("chat-active"); }
 const exitBtn = document.getElementById("chat-exit");
 if (exitBtn) exitBtn.addEventListener("click", exitFullscreen);

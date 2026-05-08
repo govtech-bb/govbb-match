@@ -233,6 +233,9 @@ input.addEventListener("input", () => {
     userHasInteracted = true;
     if (micStatus.textContent === INITIAL_HINT) micStatus.textContent = "";
   }
+  // Typing interrupts the bot mid-sentence.
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  speakQueue = Promise.resolve();
   autosize();
   cancelAutoSend();
 });
@@ -824,10 +827,9 @@ if (SR) {
   const recog = new SR();
   recog.lang = "en-US";
   recog.interimResults = true;
-  recog.continuous = true; // keep listening until user clicks mic again
+  recog.continuous = false; // ends on natural silence → auto-send
 
   let baseValue = "";
-  let userRequestedStop = false;
   recog.addEventListener("result", (e) => {
     let interim = "", final = "";
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -843,39 +845,26 @@ if (SR) {
     listening = true;
     micBtn.classList.add("is-recording");
     micBtn.setAttribute("aria-label", "Stop voice input");
-    micStatus.textContent = "Listening… click mic again to stop.";
+    micStatus.textContent = "Listening… stop talking to send.";
     baseValue = input.value;
   });
   recog.addEventListener("end", () => {
-    // In continuous mode, Chrome may end on long silences. Auto-restart unless
-    // the user explicitly clicked mic to stop.
-    if (!userRequestedStop) {
-      try { recog.start(); return; } catch {}
-    }
     listening = false;
-    userRequestedStop = false;
     micBtn.classList.remove("is-recording");
     micBtn.setAttribute("aria-label", "Start voice input");
-    if (input.value.trim()) scheduleAutoSend();
-    else micStatus.textContent = "";
-    input.focus();
+    micStatus.textContent = "";
+    if (input.value.trim()) form.requestSubmit(); // auto-send when user stops talking
   });
   recog.addEventListener("error", (e) => {
     micStatus.textContent = `Voice error: ${e.error}. ${e.error === "not-allowed" ? "Allow microphone access in browser settings." : ""}`;
     listening = false;
-    userRequestedStop = true; // don't auto-restart on error
     micBtn.classList.remove("is-recording");
   });
 
   micBtn.addEventListener("click", async () => {
     cancelAutoSend();
-    if (listening) {
-      userRequestedStop = true;
-      recog.stop();
-      return;
-    }
+    if (listening) { recog.stop(); return; } // stop early → end fires → submit
     if (!(await ensureMicPermission())) return;
-    userRequestedStop = false;
     try { recog.start(); }
     catch (err) { micStatus.textContent = `Could not start: ${err.message}`; }
   });

@@ -22,6 +22,33 @@ const MIME = {
   ".ico": "image/x-icon",
 };
 
+// Wrap Float32LE PCM samples (16kHz mono) as a 16-bit PCM WAV file.
+function float32ToWav(float32buf, sampleRate) {
+  const sampleCount = float32buf.length / 4;
+  const pcm16 = Buffer.alloc(sampleCount * 2);
+  for (let i = 0; i < sampleCount; i++) {
+    const f = float32buf.readFloatLE(i * 4);
+    const s = Math.max(-1, Math.min(1, f));
+    pcm16.writeInt16LE(s < 0 ? s * 0x8000 : s * 0x7fff, i * 2);
+  }
+  const dataSize = pcm16.length;
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + dataSize, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16);          // fmt chunk size
+  header.writeUInt16LE(1, 20);           // PCM
+  header.writeUInt16LE(1, 22);           // mono
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(sampleRate * 2, 28); // byte rate
+  header.writeUInt16LE(2, 32);           // block align
+  header.writeUInt16LE(16, 34);          // bits per sample
+  header.write("data", 36);
+  header.writeUInt32LE(dataSize, 40);
+  return Buffer.concat([header, pcm16]);
+}
+
 function send(res, status, body, headers = {}) {
   res.writeHead(status, headers);
   res.end(body);
@@ -34,27 +61,21 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const { pathname } = url;
 
-  // Voice transcription — the only API endpoint.
+  // Voice transcription. Body: raw Float32LE PCM, 16kHz, mono (decoded client-side).
   if (pathname === "/api/transcribe" && req.method === "POST") {
     if (!fs.existsSync(MODEL)) return sendJSON(res, 501, { error: `Whisper model not found at ${MODEL}` });
 
     const id = crypto.randomBytes(8).toString("hex");
-    const tmp = os.tmpdir();
-    const inFile = path.join(tmp, `voice-${id}.bin`);
-    const wavFile = path.join(tmp, `voice-${id}.wav`);
+    const wavFile = path.join(os.tmpdir(), `voice-${id}.wav`);
 
     try {
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
-      fs.writeFileSync(inFile, Buffer.concat(chunks));
-
-      await new Promise((resolve, reject) => {
-        const ff = spawn("ffmpeg", ["-y", "-i", inFile, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", wavFile], { stdio: ["ignore", "ignore", "pipe"] });
-        let err = "";
-        ff.stderr.on("data", (c) => (err += c));
-        ff.on("close", (code) => code === 0 ? resolve() : reject(new Error("ffmpeg failed: " + err.slice(-300))));
-        ff.on("error", reject);
-      });
+      const buf = Buffer.concat(chunks);
+      if (buf.length < 4 * 1024 || buf.length % 4 !== 0) {
+        return sendJSON(res, 400, { error: "Audio too short or empty." });
+      }
+      fs.writeFileSync(wavFile, float32ToWav(buf, 16000));
 
       const text = await new Promise((resolve, reject) => {
         const wc = spawn("whisper-cli", ["-m", MODEL, "-f", wavFile, "-nt", "-np", "-l", "en"], { stdio: ["ignore", "pipe", "pipe"] });
@@ -69,7 +90,6 @@ const server = http.createServer(async (req, res) => {
     } catch (e) {
       return sendJSON(res, 500, { error: e.message });
     } finally {
-      fs.rmSync(inFile, { force: true });
       fs.rmSync(wavFile, { force: true });
     }
   }

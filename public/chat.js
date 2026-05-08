@@ -1,3 +1,24 @@
+// Decode any browser-recorded audio blob to 16kHz mono Float32 PCM.
+async function blobToPcm16kMono(blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new Ctx();
+  const decoded = await ctx.decodeAudioData(arrayBuffer);
+  await ctx.close().catch(() => {});
+
+  const targetRate = 16000;
+  const targetLength = Math.ceil(decoded.duration * targetRate);
+  const offline = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+    1, targetLength, targetRate
+  );
+  const src = offline.createBufferSource();
+  src.buffer = decoded;
+  src.connect(offline.destination);
+  src.start();
+  const rendered = await offline.startRendering();
+  return rendered.getChannelData(0); // Float32Array
+}
+
 // Conversational chat shell + voice input.
 // Matching strategy:
 // - Extract age + interests from each user message.
@@ -792,10 +813,13 @@ if (SR) {
         }
         micStatus.textContent = "Transcribing…";
         try {
+          // Decode to 16kHz mono Float32 PCM client-side. Removes any
+          // server-side audio decoding dependency (ffmpeg / opus libs).
+          const pcm = await blobToPcm16kMono(blob);
           const res = await fetch("/api/transcribe", {
             method: "POST",
-            headers: { "Content-Type": blob.type || "audio/webm" },
-            body: blob,
+            headers: { "Content-Type": "application/octet-stream" },
+            body: pcm.buffer,
           });
           if (!res.ok) {
             const { error } = await res.json().catch(() => ({}));

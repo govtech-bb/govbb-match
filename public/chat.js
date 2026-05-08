@@ -53,6 +53,13 @@ function refreshAllDeckFooters() {
   });
 }
 
+function collapseDeckFullscreen() {
+  document.querySelectorAll(".msg--deck-fullscreen").forEach((el) => {
+    el.classList.remove("msg--deck-fullscreen");
+  });
+  document.body.classList.remove("deck-fullscreen-active");
+}
+
 const BARBADOS_PARISHES = [
   "Christ Church",
   "Saint Andrew",
@@ -170,6 +177,7 @@ function resetChat() {
   state.selected = [];
   state.applying = null;
   state.hasShownMatches = false;
+  collapseDeckFullscreen();
   log.innerHTML = "";
   input.value = "";
   input.placeholder = INITIAL_PLACEHOLDER;
@@ -491,6 +499,7 @@ function startApplication() {
     botSay("You haven't saved any opportunities yet — swipe right (or click ♥ Save) on the ones you're interested in.");
     return;
   }
+  collapseDeckFullscreen();
   state.applying = {
     selected: state.selected.slice(),
     step: 0,
@@ -657,15 +666,19 @@ async function handleUserMessage(text) {
 
   // Have age + at least one interest — fetch matches.
   const intro = state.hasShownMatches
-    ? `Updated. Here are matches for age ${state.age} interested in ${describeInterests(state.interests)}:`
-    : `Thanks! Based on age ${state.age} and interests in ${describeInterests(state.interests)}, here are some opportunities:`;
+    ? `Here are your updated matches.`
+    : `Here are some opportunities for you..`;
   const pending = append("bot", intro + " (searching…)");
   try {
     const matches = await fetchMatches();
     const msgText = pending.querySelector(".msg__text");
     msgText.innerHTML = `${esc(intro)}${renderDeckHtml(matches)}<p class="govbb-text-caption" style="margin-top:var(--spacing-s)">Want to refine? Tell me another interest, change your age, or type <em>reset</em> to start over.</p>`;
     const deckEl = msgText.querySelector("[data-deck]");
-    if (deckEl && matches.length) initDeck(deckEl, matches.slice(0, 10));
+    if (deckEl && matches.length) {
+      pending.classList.add("msg--deck-fullscreen");
+      document.body.classList.add("deck-fullscreen-active");
+      initDeck(deckEl, matches.slice(0, 10));
+    }
     state.hasShownMatches = true;
     log.scrollTop = log.scrollHeight;
   } catch (err) {

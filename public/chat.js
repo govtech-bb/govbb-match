@@ -46,6 +46,8 @@ const state = {
   selected: [],   // [{id, title}] queued from swipe-right; cleared when application starts
   maybes: [],     // [{id, title, m}] queued from swipe-down; reviewed before applying
   applying: null, // { selected: [...], step, answers }
+  history: [],    // [{role:"user"|"assistant", content}] for /api/chat
+  aiAvailable: null, // null = unknown, true/false after first call
 };
 
 function refreshAllDeckFooters() {
@@ -250,8 +252,10 @@ function resetChat() {
   state.age = null;
   state.interests = [];
   state.selected = [];
+  state.maybes = [];
   state.applying = null;
   state.hasShownMatches = false;
+  state.history = [];
   collapseDeckFullscreen();
   log.innerHTML = "";
   input.value = "";
@@ -799,6 +803,68 @@ function describeInterests(list) {
   return `${list.slice(0, -1).join(", ")}, and ${list[list.length - 1]}`;
 }
 
+// AI-driven flow. Returns true if it handled the turn, false to fall back.
+async function handleUserMessageAI(text) {
+  const pending = append("bot", "…");
+  const msgText = pending.querySelector(".msg__text");
+  try {
+    const r = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ history: state.history, userMessage: text }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (data.type === "fallback") {
+      state.aiAvailable = false;
+      pending.remove();
+      return false;
+    }
+    if (!r.ok || data.error) {
+      msgText.textContent = `Sorry — ${data.error || "couldn't reach the assistant"}. Try again.`;
+      return true;
+    }
+    state.aiAvailable = true;
+    state.history.push({ role: "user", content: text });
+
+    if (data.type === "question") {
+      const q = data.text || "Tell me more.";
+      state.history.push({ role: "assistant", content: q });
+      msgText.textContent = q;
+      speak(q);
+      log.scrollTop = log.scrollHeight;
+      return true;
+    }
+    if (data.type === "matches") {
+      const opps = await loadOpps();
+      const byId = new Map(opps.map((o) => [o.id, o]));
+      const matches = (data.ids || []).map((id) => byId.get(id)).filter(Boolean);
+      const intro = data.intro || "Here are some opportunities for you.";
+      state.history.push({ role: "assistant", content: intro });
+      if (!matches.length) {
+        msgText.textContent = "I couldn't pin down a strong match. Tell me a different angle?";
+        return true;
+      }
+      msgText.innerHTML = `${esc(intro)}${renderDeckHtml(matches)}<p class="govbb-text-caption" style="margin-top:var(--spacing-s)">Want to refine? Tell me more, or type <em>reset</em> to start over.</p>`;
+      const deckEl = msgText.querySelector("[data-deck]");
+      if (deckEl) {
+        pending.classList.add("msg--deck-fullscreen");
+        document.body.classList.add("deck-fullscreen-active");
+        initDeck(deckEl, matches.slice(0, 10));
+      }
+      state.hasShownMatches = true;
+      speak(intro);
+      log.scrollTop = log.scrollHeight;
+      return true;
+    }
+    msgText.textContent = "Hmm — I didn't get that. Try again?";
+    return true;
+  } catch (err) {
+    msgText.textContent = `Sorry — ${err.message}. Falling back to the basic flow.`;
+    state.aiAvailable = false;
+    return false;
+  }
+}
+
 async function handleUserMessage(text) {
   const lower = text.toLowerCase().trim();
 
@@ -810,6 +876,12 @@ async function handleUserMessage(text) {
   if (state.applying) {
     handleApplicationAnswer(text);
     return;
+  }
+
+  // Try AI flow first; falls back to regex below if no API key.
+  if (state.aiAvailable !== false) {
+    const handled = await handleUserMessageAI(text);
+    if (handled) return;
   }
 
   const newAge = parseAge(text);

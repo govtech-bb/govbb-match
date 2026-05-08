@@ -46,6 +46,10 @@ const CF_TTS_MODEL = process.env.CF_TTS_MODEL || "@cf/myshell-ai/melotts";
 const CF_TTS_LANG = process.env.CF_TTS_LANG || "en";
 const useCloudflare = Boolean(CF_ACCOUNT_ID && CF_API_TOKEN);
 
+// Anthropic
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
+
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -208,6 +212,85 @@ async function handleTtsLocal(req, res) {
   } catch (e) { return sendJSON(res, 500, { error: e.message }); }
 }
 
+// ---- /api/chat ----
+let _opps = null;
+function loadOpps() {
+  if (_opps) return _opps;
+  _opps = JSON.parse(fs.readFileSync(path.join(PUBLIC, "data", "opportunities.json"), "utf8"));
+  return _opps;
+}
+
+async function handleChat(req, res) {
+  if (!ANTHROPIC_API_KEY) return sendJSON(res, 200, { type: "fallback" });
+  try {
+    const buf = await readBody(req);
+    let body = {};
+    try { body = JSON.parse(buf.toString("utf8")); } catch {}
+    const opps = loadOpps();
+    const compactOpps = opps.map((o) => ({
+      id: o.id, title: o.title, category: o.category,
+      description: (o.description || "").slice(0, 280),
+      eligibility: o.eligibility || {}, tags: o.tags || [],
+    }));
+    const system = `You are a friendly assistant for the Government of Barbados opportunities platform. You help citizens find the right programmes (scholarships, business grants, youth training, mentorship, community programs).
+
+Your job: through a short conversation (2–4 questions max), gather just enough about the user — age, interests, situation — to recommend 3–8 strongly relevant opportunities from the list below. Ask ONE question at a time. Keep questions short and warm. When you have enough info, call present_matches with the IDs.
+
+Rules:
+- Always call exactly ONE tool: ask_question OR present_matches.
+- Don't ask for personal contact info (name, email, phone) — that comes later.
+- Respect eligibility (ageMin/ageMax/citizenship). Skip ineligible opportunities.
+- Prefer quality over quantity: 3–8 strong matches beats 15 weak ones.
+- If the user answers vaguely, ask one clarifying question, then commit.
+
+Available opportunities (JSON):
+${JSON.stringify(compactOpps)}`;
+
+    const messages = [];
+    for (const m of (body.history || [])) {
+      if (m && m.role && m.content) messages.push({ role: m.role, content: String(m.content) });
+    }
+    if (body.userMessage) messages.push({ role: "user", content: String(body.userMessage) });
+    if (!messages.length) messages.push({ role: "user", content: "Hi" });
+
+    const tools = [
+      { name: "ask_question", description: "Ask the user a single short question to gather more info before matching.",
+        input_schema: { type: "object", properties: { question: { type: "string" } }, required: ["question"] } },
+      { name: "present_matches", description: "Return the final shortlist of recommended opportunity IDs.",
+        input_schema: { type: "object",
+          properties: {
+            intro: { type: "string" },
+            opportunity_ids: { type: "array", items: { type: "string" } },
+          }, required: ["intro", "opportunity_ids"] } },
+    ];
+
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 512, system, tools, tool_choice: { type: "any" }, messages }),
+    });
+    const data = await r.json().catch(() => null);
+    if (!r.ok || !data) {
+      const err = data?.error?.message || r.statusText;
+      return sendJSON(res, r.status || 500, { error: "Anthropic error: " + String(err).slice(0, 300) });
+    }
+    const toolUse = (data.content || []).find((c) => c.type === "tool_use");
+    if (!toolUse) {
+      const text = (data.content || []).find((c) => c.type === "text")?.text || "Tell me about your interests.";
+      return sendJSON(res, 200, { type: "question", text });
+    }
+    if (toolUse.name === "ask_question") {
+      return sendJSON(res, 200, { type: "question", text: toolUse.input?.question || "Tell me more." });
+    }
+    if (toolUse.name === "present_matches") {
+      const ids = Array.isArray(toolUse.input?.opportunity_ids) ? toolUse.input.opportunity_ids : [];
+      const validIds = ids.filter((id) => opps.some((o) => o.id === id));
+      return sendJSON(res, 200, { type: "matches", ids: validIds, intro: toolUse.input?.intro || "Here are some opportunities for you." });
+    }
+    return sendJSON(res, 200, { type: "question", text: "Tell me more." });
+  } catch (e) { return sendJSON(res, 500, { error: e.message }); }
+}
+
 // ---- HTTP server ----
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -218,6 +301,9 @@ const server = http.createServer(async (req, res) => {
   }
   if (pathname === "/api/tts" && req.method === "POST") {
     return useCloudflare ? handleTtsCloudflare(req, res) : handleTtsLocal(req, res);
+  }
+  if (pathname === "/api/chat" && req.method === "POST") {
+    return handleChat(req, res);
   }
 
   // Static files

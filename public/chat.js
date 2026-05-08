@@ -141,7 +141,7 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
 });
 
-const INITIAL_GREETING = "Hi! Tell us your age and interests, and we’ll find the right path for you.";
+const INITIAL_GREETING = "How can we help you build your future?";
 
 function resetChat() {
   state.age = null;

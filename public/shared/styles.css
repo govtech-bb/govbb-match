@@ -396,6 +396,8 @@ body.chat-active .chat__composer {
   opacity: 0.85;
 }
 
+.chat__icon-btn.is-muted { color: var(--color-mid-grey-00); }
+
 .chat__icon-btn.is-recording {
   background: var(--color-error, #c0392b);
   color: #fff;

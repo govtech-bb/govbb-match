@@ -5,3 +5,4 @@ node_modules/
 # Whisper.cpp models — download separately, not committed.
 models/
 *.bin
+.env

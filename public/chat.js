@@ -139,8 +139,78 @@ function append(role, text, extraHtml = "") {
   row.innerHTML = `<div class="msg__text govbb-text-body">${esc(text)}${extraHtml}</div>`;
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
+  if (role === "bot" && text) speak(text);
   return row;
 }
+
+// ---------- Text-to-speech (server /api/tts) ----------
+// Messages are queued so back-to-back bot replies don't cut each other off.
+let ttsEnabled = localStorage.getItem("ttsEnabled") !== "false"; // default on
+let currentAudio = null;
+let speakQueue = Promise.resolve();
+
+function speak(text) {
+  if (!ttsEnabled || !text) return;
+  speakQueue = speakQueue.then(() => playOne(text)).catch(() => {});
+}
+
+async function playOne(text) {
+  if (!ttsEnabled) return; // user may have muted while queued
+  let url;
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    url = URL.createObjectURL(blob);
+  } catch { return; }
+
+  await new Promise((resolve) => {
+    const audio = new Audio(url);
+    currentAudio = audio;
+    const done = () => {
+      try { URL.revokeObjectURL(url); } catch {}
+      if (currentAudio === audio) currentAudio = null;
+      resolve();
+    };
+    audio.addEventListener("ended", done);
+    audio.addEventListener("error", done);
+    audio.addEventListener("pause", () => {
+      // Treat as "done" only if mute toggle paused us, not natural pauses.
+      if (!ttsEnabled) done();
+    });
+    audio.play().catch(done);
+  });
+}
+
+const TTS_ICON_ON = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></svg>`;
+const TTS_ICON_OFF = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 9a5 5 0 0 1 .95 2.293"/><path d="M19.364 5.636a9 9 0 0 1 1.889 9.96"/><path d="m2 2 20 20"/><path d="m7 7-.587.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298V11"/><path d="M9.828 4.172A.686.686 0 0 1 11 4.657v.686"/></svg>`;
+
+function setTts(on) {
+  ttsEnabled = on;
+  localStorage.setItem("ttsEnabled", String(on));
+  if (!on) {
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    speakQueue = Promise.resolve(); // drop pending replies
+  }
+  const btn = document.getElementById("tts-toggle");
+  if (btn) {
+    btn.setAttribute("aria-pressed", String(on));
+    btn.title = on ? "Mute assistant voice" : "Unmute assistant voice";
+    btn.classList.toggle("is-muted", !on);
+    btn.innerHTML = on ? TTS_ICON_ON : TTS_ICON_OFF;
+  }
+}
+
+(function initTtsToggle() {
+  const btn = document.getElementById("tts-toggle");
+  if (!btn) return;
+  setTts(ttsEnabled);
+  btn.addEventListener("click", () => setTts(!ttsEnabled));
+})();
 
 // Bot reply with a brief "typing" delay + bouncing-dot animation.
 function botSay(text, extraHtml = "") {
@@ -149,6 +219,7 @@ function botSay(text, extraHtml = "") {
   setTimeout(() => {
     row.querySelector(".msg__text").innerHTML = `${esc(text)}${extraHtml}`;
     log.scrollTop = log.scrollHeight;
+    if (text) speak(text);
   }, delay);
   return row;
 }
@@ -753,9 +824,10 @@ if (SR) {
   const recog = new SR();
   recog.lang = "en-US";
   recog.interimResults = true;
-  recog.continuous = false;
+  recog.continuous = true; // keep listening until user clicks mic again
 
   let baseValue = "";
+  let userRequestedStop = false;
   recog.addEventListener("result", (e) => {
     let interim = "", final = "";
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -771,11 +843,17 @@ if (SR) {
     listening = true;
     micBtn.classList.add("is-recording");
     micBtn.setAttribute("aria-label", "Stop voice input");
-    micStatus.textContent = "Listening… speak now.";
+    micStatus.textContent = "Listening… click mic again to stop.";
     baseValue = input.value;
   });
   recog.addEventListener("end", () => {
+    // In continuous mode, Chrome may end on long silences. Auto-restart unless
+    // the user explicitly clicked mic to stop.
+    if (!userRequestedStop) {
+      try { recog.start(); return; } catch {}
+    }
     listening = false;
+    userRequestedStop = false;
     micBtn.classList.remove("is-recording");
     micBtn.setAttribute("aria-label", "Start voice input");
     if (input.value.trim()) scheduleAutoSend();
@@ -785,13 +863,19 @@ if (SR) {
   recog.addEventListener("error", (e) => {
     micStatus.textContent = `Voice error: ${e.error}. ${e.error === "not-allowed" ? "Allow microphone access in browser settings." : ""}`;
     listening = false;
+    userRequestedStop = true; // don't auto-restart on error
     micBtn.classList.remove("is-recording");
   });
 
   micBtn.addEventListener("click", async () => {
     cancelAutoSend();
-    if (listening) { recog.stop(); return; }
+    if (listening) {
+      userRequestedStop = true;
+      recog.stop();
+      return;
+    }
     if (!(await ensureMicPermission())) return;
+    userRequestedStop = false;
     try { recog.start(); }
     catch (err) { micStatus.textContent = `Could not start: ${err.message}`; }
   });

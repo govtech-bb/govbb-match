@@ -6,6 +6,13 @@ let opps = [];
 
 function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
+// Only http(s) URLs may become clickable links: a javascript: (or data:,
+// vbscript:) URL contains none of the characters esc() encodes and would
+// otherwise survive into href intact (gov-bb-security#300). Scheme-allowlist
+// at the href construction site, not inside the general-purpose escaper.
+function safeUrl(u) { const s = String(u ?? ""); if (!s) return ""; try { const p = new URL(s, window.location.origin).protocol; return (p === "http:" || p === "https:") ? s : ""; } catch { return ""; } }
+
+
 function haystack(o) {
   return [
     o.title,
@@ -37,7 +44,7 @@ function render(items) {
       ${(o.tags || []).length ? `<div class="tag-list">${o.tags.map((t) => `<span class="tag-pill">${esc(t)}</span>`).join("")}</div>` : ""}
       <div class="opps-list__actions govbb-btn-group">
         <a class="govbb-btn" href="/opportunity/?id=${encodeURIComponent(o.id)}">View &amp; apply</a>
-        ${o.url ? `<a class="govbb-btn--link" href="${esc(o.url)}" target="_blank" rel="noopener">Source</a>` : ""}
+        ${safeUrl(o.url) ? `<a class="govbb-btn--link" href="${esc(safeUrl(o.url))}" target="_blank" rel="noopener">Source</a>` : ""}
       </div>
     </li>
   `).join("");

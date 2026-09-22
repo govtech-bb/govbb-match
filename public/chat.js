@@ -136,6 +136,13 @@ const SUGGESTED_INTERESTS = [
 
 function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
+// Only http(s) URLs may become clickable links: a javascript: (or data:,
+// vbscript:) URL contains none of the characters esc() encodes and would
+// otherwise survive into href intact (gov-bb-security#300). Scheme-allowlist
+// at the href construction site, not inside the general-purpose escaper.
+function safeUrl(u) { const s = String(u ?? ""); if (!s) return ""; try { const p = new URL(s, window.location.origin).protocol; return (p === "http:" || p === "https:") ? s : ""; } catch { return ""; } }
+
+
 function append(role, text, extraHtml = "") {
   const row = document.createElement("div");
   row.className = `msg msg--${role}`;
@@ -366,8 +373,8 @@ function renderDeckHtml(matches, opts = {}) {
   const top = matches.slice(0, 10);
   const cards = top.map((m, i) => {
     const reasons = (m._score && m._score.reasons) ? m._score.reasons.join(" · ") : "";
-    const link = m.url
-      ? `<a class="govbb-link match-card__link" href="${esc(m.url)}" target="_blank" rel="noopener">Learn more →</a>`
+    const link = safeUrl(m.url)
+      ? `<a class="govbb-link match-card__link" href="${esc(safeUrl(m.url))}" target="_blank" rel="noopener">Learn more →</a>`
       : "";
     const story = successStory(m);
     const maybeStamp = mode === "primary"
